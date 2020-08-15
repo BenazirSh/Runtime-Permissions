@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Runtime Permissions</string>
+    <string name="button_desc">Contacts</string>
+    <string name="button_desc2">Gallery</string>
+</resources>
