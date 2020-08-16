@@ -43,10 +43,10 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AppCompatActivity {
     private Button contactsButton, galleryButton;
-    String path;
+//    String path;
 
-    public static final int Gallery_Code = 100;
-    public static final int Contacts_Code = 101;
+//    public static final int Gallery_Code = 100;
+//    public static final int Contacts_Code = 101;
 
 
     private ImageView imageView;
@@ -64,7 +64,9 @@ public class MainActivity extends AppCompatActivity {
         contactsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                checkPermission(Manifest.permission.READ_CONTACTS, Contacts_Code);
+//                checkPermission(Manifest.permission.READ_CONTACTS, Contacts_Code);
+
+                requestContact();
 
             }
         });
@@ -73,19 +75,29 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                requestCameraAndStorage(v);
-
+                requestCameraAndStorage();
 
             }
         });
     }
 
-    public void requestCameraAndStorage(View view) {
+    public void requestCameraAndStorage() {
         String[] permissions = {Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
         Permissions.check(this, permissions, null, null, new PermissionHandler() {
             @Override
             public void onGranted() {
                 uploadImage();
+            }
+        });
+    }
+
+    public void requestContact() {
+        String[] permissions = {Manifest.permission.READ_CONTACTS};
+        Permissions.check(this, permissions, null, null, new PermissionHandler() {
+            @Override
+            public void onGranted() {
+                Intent i = new Intent(MainActivity.this, ContactsActivity.class);
+                startActivity(i);
             }
         });
     }
@@ -180,13 +192,12 @@ public class MainActivity extends AppCompatActivity {
 
             } else if (requestCode == 2) {
                 Uri selectedImage = data.getData();
-                String[] filePath = {MediaStore.Images.Media.DATA};
-                Cursor c = getContentResolver().query(selectedImage, filePath, null, null, null);
-                c.moveToFirst();
-                int columnIndex = c.getColumnIndex(filePath[0]);
-                String picturePath = c.getString(columnIndex);
-                c.close();
-
+//                String[] filePath = {MediaStore.Images.Media.DATA};
+//                Cursor c = getContentResolver().query(selectedImage, filePath, null, null, null);
+//                c.moveToFirst();
+//                int columnIndex = c.getColumnIndex(filePath[0]);
+//                String picturePath = c.getString(columnIndex);
+//                c.close();
 //                Bitmap thumbnail = (BitmapFactory.decodeFile(picturePath));
 //                imageView.setImageBitmap(thumbnail);
 
@@ -199,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void checkPermission(String readContacts, int contacts_code) {
+    /*private void checkPermission(String readContacts, int contacts_code) {
         if (ContextCompat.checkSelfPermission(MainActivity.this, readContacts)
                 == PackageManager.PERMISSION_DENIED) {
 
@@ -224,9 +235,9 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         }
-    }
+    }*/
 
-    @Override
+   /* @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
@@ -273,6 +284,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public class GenericFileProvider extends FileProvider {
-    }
+    }*/
 }
 
