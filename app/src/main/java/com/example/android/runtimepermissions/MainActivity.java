@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import android.Manifest;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -34,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -48,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private ImageView imageView;
+    private Uri mImageCaptureUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,10 +99,21 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int item) {
                 if (options[item].equals("Take Photo")) {
 
-                    Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    File f = new File(android.os.Environment.getExternalStorageDirectory(), "temp.jpg");
-                    takePicture.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(MainActivity.this, getApplicationContext().getPackageName() + ".provider", f));
-                    startActivityForResult(takePicture, 0);
+//                    Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//                    File f = new File(android.os.Environment.getExternalStorageDirectory(), "temp.jpg");
+//                    takePicture.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(MainActivity.this, getApplicationContext().getPackageName() + ".provider", f));
+//                    startActivityForResult(takePicture, 0);
+
+
+                    String fileName = "temp.jpg";
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Images.Media.TITLE, fileName);
+                    mImageCaptureUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, mImageCaptureUri);
+                    startActivityForResult(intent, 0);
+
 
                 } else if (options[item].equals("Choose from Gallery")) {
                     Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -118,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
             if (requestCode == 0) {
-                File f = new File(Environment.getExternalStorageDirectory().toString());
+                /*File f = new File(Environment.getExternalStorageDirectory().toString());
                 for (File temp : f.listFiles()) {
                     if (temp.getName().equals("temp.jpg")) {
                         f = temp;
@@ -155,7 +169,15 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                }
+                }*/
+
+                Cursor cursor = getContentResolver().query(mImageCaptureUri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
+                int column_index_data = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                cursor.moveToFirst();
+                String capturedImageFilePath = cursor.getString(column_index_data);
+                final File f = new File(capturedImageFilePath);
+                imageView.setImageBitmap(BitmapFactory.decodeFile(f.getAbsolutePath()));
+
             } else if (requestCode == 2) {
                 Uri selectedImage = data.getData();
                 String[] filePath = {MediaStore.Images.Media.DATA};
@@ -165,8 +187,11 @@ public class MainActivity extends AppCompatActivity {
                 String picturePath = c.getString(columnIndex);
                 c.close();
 
-                Bitmap thumbnail = (BitmapFactory.decodeFile(picturePath));
-                imageView.setImageBitmap(thumbnail);
+//                Bitmap thumbnail = (BitmapFactory.decodeFile(picturePath));
+//                imageView.setImageBitmap(thumbnail);
+
+
+                imageView.setImageURI(selectedImage);
 
 
             }
