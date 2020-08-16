@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -24,19 +25,27 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.nabinbhandari.android.permissions.PermissionHandler;
+import com.nabinbhandari.android.permissions.Permissions;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
+import java.util.ArrayList;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends AppCompatActivity {
     private Button contactsButton, galleryButton;
+    String path;
 
     public static final int Gallery_Code = 100;
     public static final int Contacts_Code = 101;
+
 
     private ImageView imageView;
 
@@ -61,9 +70,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
+                requestCameraAndStorage(v);
+
+
+            }
+        });
+    }
+
+    public void requestCameraAndStorage(View view) {
+        String[] permissions = {Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        Permissions.check(this, permissions, null, null, new PermissionHandler() {
+            @Override
+            public void onGranted() {
                 uploadImage();
-
-
             }
         });
     }
@@ -76,17 +95,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int item) {
                 if (options[item].equals("Take Photo")) {
+
                     Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    File f = new File(android.os.Environment.getExternalStorageDirectory(), "");
-                    takePicture.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
-                    startActivityForResult(takePicture, 1);
+                    File f = new File(android.os.Environment.getExternalStorageDirectory(), "temp.jpg");
+                    takePicture.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(MainActivity.this, getApplicationContext().getPackageName() + ".provider", f));
+                    startActivityForResult(takePicture, 0);
 
                 } else if (options[item].equals("Choose from Gallery")) {
-                    Intent gallery = new Intent();
-                    gallery.setType("image/*");
-                    gallery.setAction(Intent.ACTION_GET_CONTENT);
+                    Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    startActivityForResult(intent, 2);
 
-                    startActivityForResult(Intent.createChooser(gallery, "Select Picture"), 1);
                 } else if (options[item].equals("Cancel")) {
                     dialog.dismiss();
                 }
@@ -99,25 +117,23 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            if (requestCode == 1) {
-
-
+            if (requestCode == 0) {
                 File f = new File(Environment.getExternalStorageDirectory().toString());
-                File[] files = f.listFiles();
-                if (files != null) {
-                    for (File temp : files) {
-                        if (temp.getName().equals("")) {
-                            f = temp;
-                            break;
-                        }
+                for (File temp : f.listFiles()) {
+                    if (temp.getName().equals("temp.jpg")) {
+                        f = temp;
+                        break;
                     }
                 }
                 try {
                     Bitmap bitmap;
                     BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+
                     bitmap = BitmapFactory.decodeFile(f.getAbsolutePath(),
                             bitmapOptions);
+
                     imageView.setImageBitmap(bitmap);
+
                     String path = android.os.Environment
                             .getExternalStorageDirectory()
                             + File.separator
@@ -148,8 +164,11 @@ public class MainActivity extends AppCompatActivity {
                 int columnIndex = c.getColumnIndex(filePath[0]);
                 String picturePath = c.getString(columnIndex);
                 c.close();
+
                 Bitmap thumbnail = (BitmapFactory.decodeFile(picturePath));
                 imageView.setImageBitmap(thumbnail);
+
+
             }
         }
     }
@@ -176,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
                 intent.setAction(android.content.Intent.ACTION_VIEW);
                 intent.setType("image/*");
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 startActivity(intent);
             }
         }
@@ -226,4 +246,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    public class GenericFileProvider extends FileProvider {
+    }
 }
+
